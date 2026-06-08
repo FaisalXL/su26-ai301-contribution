@@ -1,15 +1,16 @@
-# Contribution [#]: [Issue Title]
+# Contribution 1: [Adapter: llama.cpp server Model Provider]
 
-**Contribution Number:** [1 / 2 / 3]  
-**Student:** [Your Name]  
-**Issue:** [GitHub issue link]  
-**Status:** [Phase I / Phase II / Phase III / Phase IV] [In Progress / Complete]
+**Contribution Number:** 1
+**Student:** Faisal  
+**Issue:** https://github.com/orthogonalhq/nous-core/issues/318
+**Status:** Phase 1 Complete
 
 ---
 
 ## Why I Chose This Issue
 
-[1-2 paragraphs explaining why this issue interests you, how it matches your skills/learning goals, what you hope to learn]
+This issue requires implementing a model provider adapter so the nous-core agent framework can communicate with a locally hosted llama.cpp server. I chose this issue because it is tightly scoped (and also well structured), making it a manageable candidate for my first opensource pull request. The nous-core project itself is highly compelling. I have dabbled with Typescript and this provides a great environment to practically apply and build on those skills. With this issue i hope to learn the complete lifecycle of an open-source PR!
+
 
 ---
 
