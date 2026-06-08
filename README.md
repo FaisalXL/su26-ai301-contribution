@@ -12,8 +12,15 @@
 
 ## Why I Chose This Issue
 
-This issue requires implementing a model provider adapter so the nous-core agent framework can communicate with a locally hosted llama.cpp server. I chose this issue because it is tightly scoped (and also well structured), making it a manageable candidate for my first opensource pull request. The nous-core project itself is highly compelling. I have dabbled with Typescript and this provides a great environment to practically apply and build on those skills. With this issue i hope to learn the complete lifecycle of an open-source PR!
+This issue requires implementing a model provider adapter so the nous-core agent framework can communicate with a locally hosted llama.cpp server. 
 
+I'm interested in this because:
+
+- I've dabbled with TypeScript before, so this provides a great environment to practically apply and build on those skills.
+
+- The codebase area is tightly scoped (and also well structured!) making it a manageable candidate for my first pull request.
+
+Left a comment on the issue introducing myself!
 
 ---
 
