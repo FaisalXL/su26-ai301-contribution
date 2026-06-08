@@ -1,8 +1,11 @@
 # Contribution 1: [Adapter: llama.cpp server Model Provider]
 
 **Contribution Number:** 1
+
 **Student:** Faisal  
+
 **Issue:** https://github.com/orthogonalhq/nous-core/issues/318
+
 **Status:** Phase 1 Complete
 
 ---
