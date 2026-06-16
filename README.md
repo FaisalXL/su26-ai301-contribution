@@ -6,7 +6,7 @@
 
 **Issue:** https://github.com/orthogonalhq/nous-core/issues/318
 
-**Status:** Phase 1 Complete
+**Status:** Phase 2 Complete
 
 ---
 
