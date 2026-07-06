@@ -6,7 +6,7 @@
 
 **Issue:** https://github.com/orthogonalhq/nous-core/issues/318
 
-**Status:** Phase 3 Complete
+**Status:** Phase 4 Complete — PR Merged
 
 ---
 
@@ -209,9 +209,20 @@ Regenerated the provider catalogs via `pnpm --filter @nous/subcortex-providers r
 **PR Description:** See PR for full description. Summary: adds `providers/llama-cpp/` as a certified provider leaf targeting the OpenAI-compat `chat-completions` protocol, with no-auth factory, regenerated catalogs, and 13 unit tests.
 
 **Maintainer Feedback:**
-- Awaiting review
 
-**Status:** Open — awaiting review
+From [@atlamors](https://github.com/atlamors) (Jun 23, 2026), who merged the PR:
+
+> The provider leaf follows the current certified-provider shape: `llama-cpp` is registered through the generated catalogs, uses the OpenAI-compatible Chat Completions path, defaults to `http://localhost:8080`, declares no required auth, and includes focused provider tests for construction, validation, endpoint usage, invoke behavior, error mapping, abort handling, and streaming.
+>
+> I was able to confirm the app builds and boots, but I cannot do a full local-provider e2e pass yet because the core local-provider infrastructure is still mostly Ollama-specific. So I'm reviewing this as an early-access provider integration rather than a complete end-to-end llama.cpp runtime validation.
+>
+> This PR also surfaced a few issues in the current provider surface that are on my side rather than faults in this contribution: `chat-completions` currently conflates protocol shape with runtime capabilities such as native tool-use behavior; the shared `ChatCompletionsProvider` does not yet have a clean no-auth local-provider mode (why this has to pass a placeholder key); and local provider discovery/selectability is still hardcoded around Ollama in places.
+>
+> For the early-access state of the app, I'm comfortable accepting this as the initial llama.cpp provider leaf. Follow-up work on no-auth handling, local-provider discovery, and adapter capability cleanup should be tracked separately so this contribution can stay focused and merged.
+
+No changes were requested — merged as-is on the first review pass.
+
+**Status:** Merged into `feat/contributor-friendly-inference-provider-surface` on June 23, 2026. Closes issue #318.
 
 ---
 
