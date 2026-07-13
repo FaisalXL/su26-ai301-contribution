@@ -6,7 +6,7 @@
 
 **Issue:** https://github.com/AcademySoftwareFoundation/OpenImageIO/issues/3992
 
-**Status:** Phase 1 — Issue claimed, implementation not yet started
+**Status:** Phase 2 Complete — Reproduced & Planned. Environment set up, working branch created, solution plan written. Implementation not yet started (Phase 3).
 
 ---
 
@@ -53,13 +53,29 @@ There is already a placeholder file waiting for this specific conversion: `tests
 
 ### Environment Setup
 
-Not yet performed. Planned steps (per project docs):
+Completed. Forked the repo, cloned locally, and built with CMake + Homebrew dependencies on macOS (Apple Silicon):
 
 ```
-git clone https://github.com/AcademySoftwareFoundation/OpenImageIO.git
+git clone https://github.com/FaisalXL/OpenImageIO.git
 cd OpenImageIO
-# build via CMake per BUILDING.md
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release ...
+cmake --build build -j
 ```
+
+**Errors hit and how I fixed them:**
+
+1. **`ctest` reported "No tests were found!!!"** — I was running `ctest` from the repo root instead of from inside `build/`. Fix: `cd build && ctest`, or `ctest --test-dir build` from the root.
+2. **Every single test failed with `env: python: No such file or directory`** — root-caused this by reading `src/cmake/testing.cmake`: every test is registered as `add_test(NAME ... COMMAND ${Python3_EXECUTABLE} testsuite/runtest.py ...)`. Because my build was configured with `USE_PYTHON=0`, `find_package(Python3)` never ran, so `Python3_EXECUTABLE` was empty — CMake fell back to invoking `runtest.py` directly via its `#!/usr/bin/env python` shebang, which fails on macOS since only `python3` (not `python`) exists on `PATH`. Fix: reconfigure with the interpreter pinned explicitly, without having to flip `USE_PYTHON` back on:
+   ```
+   cmake -DPython3_EXECUTABLE=$(command -v python3) build
+   ```
+   This fixed all 135 tests going from 100% erroring to running for real.
+3. After the fix, established a real baseline: **120/135 tests pass (89%)**. The 15 failures are pre-existing and unrelated to my issue — confirmed via `git status` that no source files are modified (clean checkout except build artifacts):
+   - `docs-examples-cpp` — the test I'm actually working on. Fails because 5 of its 8 "chapters" (including `imagecache`, mine) are still unimplemented stub files (43 lines each, just a placeholder `example1()`). This is the expected starting state for this umbrella issue.
+   - `cmake-consumer`, `igrep`, `oiiotool`, `oiiotool-copy`, `oiiotool-subimage`, `oiiotool-text` — likely reference-image/FreeType-version mismatches (spotted a `ref/out-freetype2.7.tif` vs. default reference pattern elsewhere in the log) and local-install-path quirks, unrelated to ImageCache.
+   - `texture-levels-stochaniso(.batch)`, `texture-levels-stochmip(.batch)`, `texture-udim(.batch)` — known-flaky stochastic texture-sampling tests, sensitive to SIMD/thread timing on Apple Silicon.
+
+   This 15-failure baseline is documented so that after implementing my fix, I can confirm I haven't introduced any *new* failures beyond this known set.
 
 - OpenImageIO requires a CLA (individual or corporate) to be signed via EasyCLA before a PR can be merged — need to complete this before opening a PR.
 - Commits must be signed off per the DCO (`git commit -s`).
@@ -74,7 +90,8 @@ cd OpenImageIO
 ### Reproduction Evidence
 
 - Issue: https://github.com/AcademySoftwareFoundation/OpenImageIO/issues/3992
-- Claiming comment posted: *(add permalink once posted)*
+- Claiming comment posted: https://github.com/AcademySoftwareFoundation/OpenImageIO/issues/3992#issuecomment-4889912173 (Jul 6, 2026)
+- Working branch (in my fork): https://github.com/FaisalXL/OpenImageIO/tree/fix-issue-3992-imagecache-docs-example
 - Conversion process reference: https://github.com/OpenImageIO/oiio/wiki/Converting-documentation-examples-to-tests
 
 ---
@@ -127,7 +144,13 @@ Not yet performed — pending local build.
 
 Selected OpenImageIO issue #3992 after evaluating and ruling out several other candidate repos/issues (documented the comparison separately) for being either stale-labeled, oversaturated with competing duplicate PRs, or gated behind maintainer pre-assignment. Read the issue thread in full, confirmed the ImageCache chapter example was unclaimed by checking every comment in the thread plus OpenImageIO's merged PR history. Posted a comment on the issue claiming the ImageCache example specifically. Identified the exact files that need to change (`src/doc/imagecache.rst` and the pre-existing stub `docs-examples-imagecache.cpp`) and read the maintainer's wiki write-up of the expected conversion process.
 
-**Next steps:** clone and build OpenImageIO locally, write the actual test code, and open a draft PR.
+### Week 2 Progress
+
+Forked the repo, cloned it locally, and got the full CMake build compiling on macOS. Hit and resolved a real build/test-infra bug along the way (see Environment Setup above — a `Python3_EXECUTABLE` detection gap that made every single `ctest` test fail with `env: python: No such file or directory`; root-caused it by reading through `src/cmake/testing.cmake`, then fixed it with an explicit `-DPython3_EXECUTABLE` reconfigure). Ran the full test suite and established a baseline of 120/135 passing (89%), with the 15 failures documented as pre-existing and unrelated to my change. Created and pushed my working branch (`fix-issue-3992-imagecache-docs-example`) to my fork.
+
+**Next steps:** write the real `ImageCache` example code into the `example1()` stub, wrap it in `BEGIN`/`END` marker comments, update `src/doc/imagecache.rst` to use `literalinclude`, get `docs-examples-cpp` passing, then open a draft PR.
+
+**Status: implementation (Phase 3) not yet started** — currently at "environment ready, branch created, plan written."
 
 ---
 
