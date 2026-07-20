@@ -6,7 +6,7 @@
 
 **Issue:** https://github.com/AcademySoftwareFoundation/OpenImageIO/issues/3992
 
-**Status:** Phase 2 Complete — Reproduced & Planned. Environment set up, working branch created, solution plan written. Implementation not yet started (Phase 3).
+**Status:** Phase 3 Complete — Implemented & Locally Verified. Code written, committed locally (signed off), and verified end-to-end for both C++ and Python. Not yet pushed to fork / PR not yet opened (Phase 4).
 
 ---
 
@@ -124,17 +124,23 @@ Move the ImageCache doc example's code into `docs-examples-imagecache.cpp`'s stu
 
 ### Unit Tests
 
-- [ ] Test case 1: `docs-examples-imagecache` test target builds without errors
-- [ ] Test case 2: Test runs and produces output matching a checked-in reference (`ref/out.txt` and/or reference image)
-- [ ] Test case 3: `imagecache.rst` renders correctly with `literalinclude` in place of the raw snippet (spot-checked via local Sphinx build or visual diff of the `.rst`)
+- [x] Test case 1: `docs-examples-imagecache` test target builds without errors (both C++ and Python)
+- [x] Test case 2: Test runs and produces output matching a checked-in reference — ran the real `example1()` against `tahoe.tif`, got `resolution is 512x384` from both the C++ executable and the Python script, and updated `ref/out.txt` (+ `out-arm.txt`, `out-linuxarm.txt`, in both `docs-examples-cpp/` and `docs-examples-python/`) to include the new line at its exact real position, confirmed by diffing a fresh full 8-chapter run against the patched reference
+- [x] Test case 3: `imagecache.rst` uses the exact `literalinclude`/`tabs::` structure already used by the converted `imageoutput.rst`/`imagebufalgo.rst` chapters (spot-checked by pattern match against those files, not an actual Sphinx build)
 
 ### Integration Tests
 
-- [ ] Full `docs-examples-cpp` testsuite target still passes after the change (not just the new test in isolation)
+- [x] Ran all 8 `docs-examples-cpp` chapter executables and all 8 `docs-examples-python` chapter scripts together (replicating `run.py`'s prep + execution order) and confirmed the *text* output matches the patched reference exactly, chapter-for-chapter. (The full `ctest` target still fails overall — 5 of 8 chapters are still unconverted stubs from other contributors' unclaimed pieces, which is expected for this umbrella issue and pre-dates my change.)
 
 ### Manual Testing
 
-Not yet performed — pending local build.
+Built the full library locally (CMake + Homebrew deps, including installing `opencolorio` which this checkout needed but didn't have) and ran both the C++ and Python examples directly against a real test image (`testsuite/common/tahoe-small.tif`). Both printed the correct `resolution is 512x384`.
+
+**Real bugs/API drift found and fixed along the way** (this is exactly what the umbrella issue is meant to catch):
+- `ImageCache::create()`/`destroy()` used to take/return a raw pointer; the current API uses `std::shared_ptr<ImageCache>`. Doc's old snippet was already stale here.
+- `ustring`'s `const char*` constructor is `explicit` now — string literals like `"tahoe.tif"` no longer implicitly convert where the API wants a `ustring`. Fixed by constructing `ustring filename("tahoe.tif")` explicitly.
+- `ImageCache::get_pixels(ustring, int, int, ROI, span<T>&, ...)` — the templated `span<T>` overload has an apparent bug in the current header: it builds a correct `image_span<T>` internally but then calls `as_image_span_writable_bytes()` on the *original* `span<T>` argument instead of the `image_span` it just built, which doesn't compile. Worked around by calling the lower-level `image_span<T>` overload directly instead of the `span<T>` convenience wrapper — may be worth flagging to the maintainer separately.
+- Python bindings (`src/python/py_imagecache.cpp`) don't expose `get_tile()`/`tile_pixels()`/`release_tile()` at all, so the Python example is necessarily narrower than the C++ one — documented directly in the `.rst`.
 
 ---
 
@@ -151,6 +157,14 @@ Forked the repo, cloned it locally, and got the full CMake build compiling on ma
 **Next steps:** write the real `ImageCache` example code into the `example1()` stub, wrap it in `BEGIN`/`END` marker comments, update `src/doc/imagecache.rst` to use `literalinclude`, get `docs-examples-cpp` passing, then open a draft PR.
 
 **Status: implementation (Phase 3) not yet started** — currently at "environment ready, branch created, plan written."
+
+### Week 3 Progress
+
+Implemented both the C++ and Python versions of the `example1()` fix (the doc's original snippet only ever showed C++, but the established pattern from merged reference PRs — e.g. #5197 for ImageOutput — covers both `docs-examples-cpp/` and `docs-examples-python/`, so did both). Built the full library locally, hit and fixed real compile errors caused by API drift (see Manual Testing above — stale `create()`/`destroy()` signature, `ustring` no longer implicitly constructible from a string literal, and what looks like an actual bug in the current `get_pixels(span<T>)` template). Verified both examples run correctly end-to-end against a real test image. Replicated the full 8-chapter test run (matching `run.py`'s prep/execution order) for both testsuites and patched all 6 affected reference files (`ref/out.txt`, `out-arm.txt`, `out-linuxarm.txt` under both `docs-examples-cpp/` and `docs-examples-python/`) with the new line at its verified real position. Committed locally with DCO sign-off and the required `Assisted-by:` line, folded the follow-up fixes into that same commit since nothing had been pushed yet.
+
+**Next steps:** push the branch to the fork and open the PR against `main` (maintainer confirmed in a 2023 comment on a similar doc-conversion PR that `main`/`master` is the right target, no intermediate branch needed).
+
+**Status: implementation (Phase 3) complete, locally verified.** Ready to push — holding for explicit go-ahead before touching the real GitHub fork.
 
 ---
 
