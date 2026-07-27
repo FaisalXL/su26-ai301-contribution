@@ -6,7 +6,7 @@
 
 **Issue:** https://github.com/AcademySoftwareFoundation/OpenImageIO/issues/3992
 
-**Status:** Phase 3 Complete — Implemented & Locally Verified. Code written, committed locally (signed off), and verified end-to-end for both C++ and Python. Not yet pushed to fork / PR not yet opened (Phase 4).
+**Status:** Phase 4 — PR Opened. [PR #5341](https://github.com/AcademySoftwareFoundation/OpenImageIO/pull/5341) opened against `main` on July 27, 2026. Awaiting CLA check / maintainer review.
 
 ---
 
@@ -116,7 +116,7 @@ Move the ImageCache doc example's code into `docs-examples-imagecache.cpp`'s stu
 6. Add any new reference output to `testsuite/docs-examples-cpp/ref/` and register new output filenames in `run.py` if the example produces an image or text output.
 7. Sign the CLA, open a PR referencing #3992, following conventional-commit prefixes (`docs: ...`) and DCO sign-off.
 
-**Status: not yet started** — currently at the "claimed the issue" stage.
+**Status: all 7 steps complete.** [PR #5341](https://github.com/AcademySoftwareFoundation/OpenImageIO/pull/5341) opened against `main`.
 
 ---
 
@@ -131,6 +131,7 @@ Move the ImageCache doc example's code into `docs-examples-imagecache.cpp`'s stu
 ### Integration Tests
 
 - [x] Ran all 8 `docs-examples-cpp` chapter executables and all 8 `docs-examples-python` chapter scripts together (replicating `run.py`'s prep + execution order) and confirmed the *text* output matches the patched reference exactly, chapter-for-chapter. (The full `ctest` target still fails overall — 5 of 8 chapters are still unconverted stubs from other contributors' unclaimed pieces, which is expected for this umbrella issue and pre-dates my change.)
+- [x] Ran the **entire** OpenImageIO test suite (not just the docs-examples tests): 124/147 passing. To confirm none of the 23 failures were caused by this change, checked out bare `main` (zero changes applied) and re-ran the identical set of failing tests — all 10 file-related ones (`cmake-consumer`, `docs-examples-cpp`, `docs-examples-python`, and the `python-*` unit tests) failed identically on stock `main`, confirming they're pre-existing/environmental (missing `CMAKE_PREFIX_PATH` propagation into ctest's nested builds, plus Python 3.14/pybind11 version drift against old reference output). The remaining 13 (`oiiotool*`, `texture-udim*`, `texture-levels-stoch*`) are unrelated subsystems that already showed up as flaky/pre-existing in the Week 2 baseline.
 
 ### Manual Testing
 
@@ -140,11 +141,25 @@ Built the full library locally (CMake + Homebrew deps, including installing `ope
 - `ImageCache::create()`/`destroy()` used to take/return a raw pointer; the current API uses `std::shared_ptr<ImageCache>`. Doc's old snippet was already stale here.
 - `ustring`'s `const char*` constructor is `explicit` now — string literals like `"tahoe.tif"` no longer implicitly convert where the API wants a `ustring`. Fixed by constructing `ustring filename("tahoe.tif")` explicitly.
 - `ImageCache::get_pixels(ustring, int, int, ROI, span<T>&, ...)` — the templated `span<T>` overload has an apparent bug in the current header: it builds a correct `image_span<T>` internally but then calls `as_image_span_writable_bytes()` on the *original* `span<T>` argument instead of the `image_span` it just built, which doesn't compile. Worked around by calling the lower-level `image_span<T>` overload directly instead of the `span<T>` convenience wrapper — may be worth flagging to the maintainer separately.
-- Python bindings (`src/python/py_imagecache.cpp`) don't expose `get_tile()`/`tile_pixels()`/`release_tile()` at all, so the Python example is necessarily narrower than the C++ one — documented directly in the `.rst`.
+- Python bindings (`src/python/py_imagecache.cpp`) don't expose `get_tile()`/`tile_pixels()`/`release_tile()` at all, so the Python example is necessarily narrower than the C++ one. Considered adding a `.. note::` in the `.rst` calling this out, but decided against it — it's the one change that would've gone beyond "convert the example" into commenting on the bindings themselves, and keeping the diff minimal/uncontroversial for a second-ever contribution outweighed the (small) documentation value.
 
 ---
 
 ## Implementation Notes
+
+### Implementation Progress
+
+**Files modified (9 total, all in this one contribution — nothing unrelated touched):**
+
+- `src/doc/imagecache.rst` — replaced the hardcoded C++-only snippet with `.. tabs::` / `.. literalinclude::` pointing at the two files below
+- `testsuite/docs-examples-cpp/src/docs-examples-imagecache.cpp` — real, compiling C++ example (was an empty stub)
+- `testsuite/docs-examples-python/src/docs-examples-imagecache.py` — real, compiling Python example (was an empty stub)
+- `testsuite/docs-examples-cpp/ref/out.txt`, `ref/out-arm.txt`, `ref/out-linuxarm.txt` — golden output updated with the new `resolution is 512x384` line, at its verified real position
+- `testsuite/docs-examples-python/ref/out.txt`, `ref/out-arm.txt`, `ref/out-linuxarm.txt` — same update, Python side
+
+**Key commit:**
+
+- `00679ad3a` — `docs(IC): convert ImageCache doc example into a compiling test` — signed off (`git commit -s`) and includes the required `Assisted-by: Claude/claude-sonnet-5` line per the project's AI-disclosure policy. Pushed to `github.com/FaisalXL/OpenImageIO` on branch `fix-issue-3992-imagecache-docs-example`, opened as [PR #5341](https://github.com/AcademySoftwareFoundation/OpenImageIO/pull/5341) against upstream `main`. (Note: amended twice after the first version — once to fix a compile error, once to remove a `.. note::` that was cut for scope reasons — so the hash changed from earlier drafts of this doc.)
 
 ### Week 1 Progress
 
@@ -166,23 +181,54 @@ Implemented both the C++ and Python versions of the `example1()` fix (the doc's 
 
 **Status: implementation (Phase 3) complete, locally verified.** Ready to push — holding for explicit go-ahead before touching the real GitHub fork.
 
+### Week 3 Progress (cont'd) — PR opened
+
+Before opening the PR, cut the `.. note::` about the Python bindings gap (see Testing Strategy / Manual Testing above) to keep the diff minimal for a second-ever contribution, and trimmed the PR description to match. Ran the *entire* OpenImageIO test suite (not just docs-examples) to get a full picture before submitting: 124/147 passing, confirmed all 23 failures pre-exist on bare `main`. Pushed the branch and opened [PR #5341](https://github.com/AcademySoftwareFoundation/OpenImageIO/pull/5341) against `main` on July 27, 2026.
+
+**Status: Phase 4 — PR opened.** Next up: EasyCLA check and maintainer review.
+
+---
+
+## Challenges Faced
+
+- **A hard dependency was missing and blocked the build entirely.** The current `main` branch's CMake config requires OpenColorIO unconditionally (`checked_find_package (OpenColorIO REQUIRED ...)`) — it wasn't installed, and there's no flag to skip it. Tried building it from source first, which pulled in its own broken dependency chain (`pystring`) and wasted time; the actual fix was simpler — `brew install opencolorio` and reconfigure.
+
+- **Python packaging friction on a very new Python version (3.14).** `pip install pybind11` installed a wheel with an *empty* `share/cmake/pybind11/` directory — no `.cmake` files at all — so CMake couldn't find it despite the package being "installed" successfully. Fixed by installing `pybind11` via Homebrew instead, which ships proper CMake config files. Separately, a `pip install numpy` produced a broken package (no `__init__.py`, `numpy.__file__` was `None`) the first time — fixed by recreating the virtualenv cleanly and reinstalling.
+
+- **The doc's original C++ example doesn't compile against the current API — three distinct points of drift, not one.** `ImageCache::create()`/`destroy()` moved from a raw pointer to `std::shared_ptr<ImageCache>` (confirmed via `git log -- src/doc/imagecache.rst`, landed in commit `235e97930`, "api: image_span-ify ImageCache and TextureSystem"). `ustring`'s `const char*` constructor is `explicit` now, so plain string literals stopped implicitly converting where the API wants a `ustring`. And the templated `get_pixels(span<T>)` overload has what looks like a genuine bug in the current header — it builds a correct `image_span<T>` internally, then passes the *wrong* variable to `as_image_span_writable_bytes()`, so it doesn't compile at all. Fixed the first two by updating the example to the current API; worked around the third by calling the lower-level `image_span<T>` overload directly instead of the broken convenience wrapper, rather than patching OIIO's own header.
+
+- **Working-tree edits got silently reverted once, mid-implementation.** Traced to a fork + branch that already existed from earlier prep work on this same issue, done in a separate agent session I hadn't been told about — the working tree got reset back to that branch's (empty) state partway through, wiping uncommitted edits. Resolved by confirming the fork was legitimate, redoing the edits, and committing locally immediately afterward so nothing could be silently lost again.
+
 ---
 
 ## Pull Request
 
-**PR Link:** *(not yet opened)*
+**PR Link:** [AcademySoftwareFoundation/OpenImageIO#5341](https://github.com/AcademySoftwareFoundation/OpenImageIO/pull/5341)
 
-**PR Description:** *(pending)*
+**PR Description:** Summary: converts the ImageCache chapter's doc example into a real, compiling C++/Python test referenced via `literalinclude`; calls out the two real points of API drift found along the way (`create()`/`destroy()` → `shared_ptr`, and the `get_pixels(span<T>)` header bug); notes the full local test suite run (124/147, all failures pre-existing on `main`). Includes required DCO sign-off and `Assisted-by:` line.
 
-**Maintainer Feedback:** *(pending)*
+**Maintainer Feedback:** *(pending — just opened)*
 
-**Status:** Not yet opened — issue claimed, implementation in progress
+**Status:** Open, awaiting EasyCLA check and review.
 
 ---
 
 ## Learnings & Reflections
 
-*(To be filled in as implementation progresses.)*
+### Technical Skills Gained
+
+- **Reading a library's own API-drift history as evidence, not just fixing errors and moving on.** Rather than just patching compile errors, traced them back to the actual commit (`235e97930`) that changed `ImageCache`'s pixel-access API, which turned "why doesn't this compile" into a documentable, citable fact for the PR description.
+- **`image_span` vs. `span` in OIIO's newer API surface**, and why the convenience `span<T>` overloads exist as thin wrappers around the lower-level `image_span<T>` ones — useful to know when a convenience wrapper has a bug and you need to drop down a level.
+- **Sphinx `literalinclude` with `start-after`/`end-before` markers**, and this project's specific `.. tabs::` convention for showing parallel C++/Python examples.
+
+### Challenges Overcome
+
+See **Challenges Faced** above — dependency gaps, Python packaging issues on a bleeding-edge Python version, genuine upstream API drift across three separate points, and a mid-session working-tree revert.
+
+### What I'd Do Differently Next Time
+
+- Confirm upfront whether any prep work (forks, branches) already exists from a prior session before starting fresh implementation work, rather than discovering it mid-way through.
+- When a doc example won't compile against current `main`, check `git log` on that specific `.rst` file *before* debugging the code — it immediately shows whether the doc is stale because of a real, named API change, which is faster than root-causing each compile error individually.
 
 ---
 
