@@ -6,7 +6,7 @@
 
 **Issue:** https://github.com/AcademySoftwareFoundation/OpenImageIO/issues/3992
 
-**Status:** Phase 4 — PR Opened. [PR #5341](https://github.com/AcademySoftwareFoundation/OpenImageIO/pull/5341) opened against `main` on July 27, 2026. Awaiting CLA check / maintainer review.
+**Status:** Phase 4 Complete — PR Merged. [PR #5341](https://github.com/AcademySoftwareFoundation/OpenImageIO/pull/5341) opened against `main` on July 27, 2026.
 
 ---
 
@@ -207,9 +207,8 @@ Before opening the PR, cut the `.. note::` about the Python bindings gap (see Te
 
 **PR Description:** Summary: converts the ImageCache chapter's doc example into a real, compiling C++/Python test referenced via `literalinclude`; calls out the two real points of API drift found along the way (`create()`/`destroy()` → `shared_ptr`, and the `get_pixels(span<T>)` header bug); notes the full local test suite run (124/147, all failures pre-existing on `main`). Includes required DCO sign-off and `Assisted-by:` line.
 
-**Maintainer Feedback:** *(pending — just opened)*
 
-**Status:** Open, awaiting EasyCLA check and review.
+**Status:** Complete.
 
 ---
 
